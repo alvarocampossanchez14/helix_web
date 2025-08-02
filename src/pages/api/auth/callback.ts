@@ -7,14 +7,20 @@ const DISCORD_CLIENT_SECRET = import.meta.env.DISCORD_CLIENT_SECRET;
 const DISCORD_REDIRECT_URI = import.meta.env.DISCORD_REDIRECT_URI;
 const ACCESS_TOKEN_COOKIE_NAME = import.meta.env.SESSION_COOKIE_NAME;
 const PERSONAL_AREA_URL = '/area-personal';
+const ACCESS_DENIED_URL = '/acceso-denegado';
 
-export const GET: APIRoute = async ({ request, redirect, cookies }) => {
+export const GET: APIRoute = async ({ request, cookies }) => {
     const url = new URL(request.url);
     const code = url.searchParams.get('code');
 
     if (!code) {
         console.error('El callback fue llamado sin un código de autorización.');
-        return redirect('/acceso-denegado');
+        return new Response(null, {
+            status: 302,
+            headers: {
+                'Location': ACCESS_DENIED_URL,
+            },
+        });
     }
 
     try {
@@ -34,21 +40,36 @@ export const GET: APIRoute = async ({ request, redirect, cookies }) => {
 
         if (!tokenResponse.ok) {
             console.error('Error al obtener el token:', await tokenResponse.text());
-            return redirect('/acceso-denegado');
+            return new Response(null, {
+                status: 302,
+                headers: {
+                    'Location': ACCESS_DENIED_URL,
+                },
+            });
         }
 
         const tokenData = await tokenResponse.json();
 
         cookies.set(ACCESS_TOKEN_COOKIE_NAME, tokenData.access_token, {
             httpOnly: true,
-            secure: false, // Cambia a true en producción
+            secure: true, 
             path: '/',
             maxAge: tokenData.expires_in,
         });
         
-        return redirect(PERSONAL_AREA_URL);
+        return new Response(null, {
+            status: 302,
+            headers: {
+                'Location': PERSONAL_AREA_URL,
+            },
+        });
     } catch (error) {
         console.error('Error en el callback de Discord:', error);
-        return redirect('/acceso-denegado');
+        return new Response(null, {
+            status: 302,
+            headers: {
+                'Location': ACCESS_DENIED_URL,
+            },
+        });
     }
 };
