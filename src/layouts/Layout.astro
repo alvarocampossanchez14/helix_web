@@ -7,9 +7,11 @@
         <meta name="generator" content={Astro.generator} />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha512-DxV+EoADOkOygM4IR9yXP8Sb2qwgidEmeqAEmDKIOfPRQZOWbXCzLC6vjbZyy0vPisbH2SyW27+ddLVCN+OMzQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
         <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet" />
-        <title>Helix | Roleplay Server</title>
+        <meta name="keywords" content="GTA V Roleplay, servidor GTA RP España, RP español +18, servidor GTA V con whitelist, rol GTA V adultos, comunidad roleplay GTA España, servidor RP serio, GTA 5 RP en español, whitelist GTA V RP, roleplay para mayores de edad, servidor RP +18 España, rol en GTA V online, comunidad GTA V RP">
+        <meta name="description" content="Helix Studio es un servidor de GTA V Roleplay +18 con whitelist, optimizado para ofrecer la mejor experiencia de rol en español. Únete a nuestra comunidad y vive el mejor RP en GTA V.">
+        <title>Helix Studio | +18 </title>
     </head>
-    <body class="bg-black/50 text-white font-bold font-stretch-semi-expanded select-none">
+    <body class="bg-black/50 text-white font-bold font-stretch-semi-expanded select-none scroll-smooth">
         <canvas id="plexus-background" class="absolute inset-0 w-full h-full z-0"></canvas>
         <div class="relative z-10">
             <slot />
@@ -18,7 +20,6 @@
 </html>
 
 <style>
-    /* 1. Define la opacidad por defecto en el elemento raíz */
     :root {
         --plexus-opacity: 0.4;
     }
@@ -44,7 +45,6 @@
       z-index: -1;
       width: 100%;
       height: 100vh;
-      /* 2. Usa la variable CSS para controlar la opacidad */
       opacity: var(--plexus-opacity);
     }
 

@@ -43,9 +43,14 @@ if (user && hasStaffRole) {
 <Layout title="Panel de Administración">
     <main class="container mx-auto p-8 text-white min-h-screen bg-black">
         {user && hasStaffRole ? (
-            <>
-                <h1 class="text-4xl font-bold mb-8">Panel de Administración</h1>
-                <p class="text-gray-400 text-lg mb-6">Gestiona las herramientas y postulaciones del servidor.</p>
+                <div class="mb-8 flex items-center gap-4 ">
+                    <h1 class="text-4xl font-bold">Panel de Administración</h1>
+                    <a href="/area-personal" class="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition duration-200">
+                        <span>Volver al mi área personal</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+                <p class="text-gray-400 mb-6">Bienvenido, {user.username}. Aquí puedes gestionar los formularios y postulaciones del servidor.</p>
 
                 <!-- Sección de Gestión de Formularios -->
                 <div class="bg-black/50 border border-white/20 p-6 rounded-lg shadow-xl mb-8">
@@ -99,7 +104,7 @@ if (user && hasStaffRole) {
                         );
                     })}
                 </div>
-            </>
+            </a>
         ) : (
             <div class="flex flex-col items-center justify-center min-h-screen -mt-20">
                 <h2 class="text-5xl font-bold text-red-500 mb-4">Acceso Denegado</h2>

@@ -63,20 +63,25 @@ const getFieldType = (name) => {
           )}
         </div>
       ))}
-      <div class="flex justify-between mt-6">
-        <button type="button" class="prev-step-btn bg-transparent border border-white hover:bg-white font-bold py-3 px-8 rounded-lg transition-colors duration-300 uppercase text-white hover:text-black">Anterior</button>
+      <div class="flex justify-between mt-6 items-center">
+       <div>
+         <a href="/area-personal" class="prev-step-btn bg-transparent border border-white hover:bg-white font-bold py-3 px-8 rounded-lg transition-colors duration-300 uppercase text-white hover:text-black">Volver </a>
+       </div>
+
+        <div class="flex flex-row gap-3">
+          <button type="button" class="prev-step-btn bg-transparent border border-white hover:bg-white font-bold py-3 px-8 rounded-lg transition-colors duration-300 uppercase text-white hover:text-black">Anterior</button>
         {index < steps.length - 1 ? (
           <button type="button" class="next-step-btn bg-white hover:bg-opacity-80 font-bold py-3 px-8 rounded-lg transition-colors duration-300 uppercase text-black">Siguiente</button>
         ) : (
           <button type="submit" class="bg-white hover:bg-opacity-80 font-bold py-3 px-8 rounded-lg transition-colors duration-300 uppercase text-black">Enviar Postulación</button>
         )}
+        </div>
       </div>
     </div>
   ))}
 </form>
 
-<!-- Contenedor para las notificaciones, necesario para que el JS funcione -->
-<div id="notification-container" class="fixed bottom-0 right-0 p-4 z-50"></div>
+<div id="notification-container" class="fixed top-0 right-0 p-4 z-50"></div>
 
 <script>
   import { showNotification } from '../utils/notification.js';

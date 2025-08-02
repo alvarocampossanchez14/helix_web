@@ -1,3 +1,5 @@
+// src/pages/api/aplicaciones/[id].ts
+
 export const prerender = false;
 
 import type { APIRoute } from 'astro';
@@ -6,6 +8,7 @@ import db from '../../../db';
 export const PUT: APIRoute = async ({ params, request }) => {
     try {
         const id = params.id;
+        
         const { estado } = await request.json();
 
         if (estado !== 'aceptada' && estado !== 'denegada') {

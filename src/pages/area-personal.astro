@@ -19,7 +19,6 @@ let submittedForms = [];
 
 if (user) {
   try {
-    // CORRECCIÓN: Usamos la ruta de API correcta para el estado general de los formularios
     const formStatusResponse = await fetch(`${Astro.url.origin}/api/form-status`);
     if (formStatusResponse.ok) {
       allFormStatuses = await formStatusResponse.json();
@@ -32,7 +31,6 @@ if (user) {
     });
     if (submissionsResponse.ok) {
       const submissionsData = await submissionsResponse.json();
-      // Asumimos que la respuesta es un array de nombres de formularios, e.g., ['staff']
       submittedForms = submissionsData.submittedForms;
       console.log("Formularios enviados por el usuario:", submittedForms);
     }
@@ -45,39 +43,37 @@ if (user) {
 const accessLinks = [
   { 
     title: 'POSTULACIÓN STAFF - HELIX STUDIO', 
-    description: 'Accede al formulario para crear o editar tu ficha de personaje.', 
+    description: '¿Quieres formar parte del equipo que hace posible Helix RP? Postúlate como staff y contribuye activamente al crecimiento y la gestión de nuestra comunidad roleplay.',
     url: '/formularios/staff',
     form_name: 'staff' 
   },
   {
     title: 'POSTULACIÓN CREADOR DE CONTENIDO - HELIX STUDIO',
-    description: 'Formulario para ser creador de contenido.',
+    description: '¿Eres streamer o creador de contenido? Solicita acceso para colaborar oficialmente con Helix RP y lleva tu contenido al siguiente nivel dentro del servidor.',
     url: '/formularios/content-creator',
     form_name: 'content-creator' 
   },
   {
     title: 'POSTULACIÓN FACCIONES ILEGALES - HELIX STUDIO',
-    description: 'Formulario de ilegales.',
+    description: 'Solicita la creación o liderazgo de una facción ilegal. Diseña tu propio grupo criminal y contribuye al rol con historias intensas, coherentes y bien estructuradas.',
     url: '/formularios/ilegal',
     form_name: 'ilegal'
   },
   {
     title: 'POSTULACIÓN DE EMPRESAS - HELIX STUDIO',
-    description: 'Formulario para empresas.',
+    description: '¿Tienes una idea de negocio para el servidor? Postula tu empresa y forma parte activa de la economía y el entorno laboral en Helix RP.',
     url: '/formularios/bussiness',
     form_name: 'bussiness'
   },
   
 ];
 
-// Mapeamos los enlaces con el estado dinámico obtenido de la API y el estado de envío
 const processedLinks = accessLinks.map(link => ({
   ...link,
   isFormEnabled: allFormStatuses[link.form_name] ?? false,
   isSubmitted: submittedForms.includes(link.form_name)
 }));
 
-// Filtramos los enlaces visibles para el usuario logueado
 const visibleLinks = user ? processedLinks : [];
 
 const loginUrl = '/api/auth/login';
@@ -144,7 +140,6 @@ const loginUrl = '/api/auth/login';
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
           {visibleLinks.map(link => (
             link.isSubmitted ? (
-              // NUEVO: Enlace deshabilitado si ya ha sido enviado
               <div
                 class="block rounded-lg border border-white/10 opacity-50 backdrop-blur-md p-6 flex flex-col justify-center shadow-sm"
                 key={link.url}
@@ -156,7 +151,6 @@ const loginUrl = '/api/auth/login';
                 </span>
               </div>
             ) : link.isFormEnabled ? (
-              // Enlace activo si el formulario está habilitado
               <a 
                 href={link.url} 
                 class="block rounded-lg border border-white/10 hover:border-white/40 backdrop-blur-md p-6 flex flex-col justify-center shadow-sm transition hover:-translate-y-1 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-white/50"
@@ -171,7 +165,6 @@ const loginUrl = '/api/auth/login';
                 </span>
               </a>
             ) : (
-              // Enlace deshabilitado si el formulario está cerrado
               <div
                 class="block rounded-lg border border-white/10 opacity-50 backdrop-blur-md p-6 flex flex-col justify-center shadow-sm"
                 key={link.url}

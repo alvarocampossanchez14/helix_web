@@ -1,7 +1,3 @@
----
-// src/components/ListDynamicAstroSection.astro
----
-
 <div class="w-full px-4 py-12  text-white bg-black/50" id="informacion">
   <div class="max-w-6xl mx-auto flex flex-col items-center text-center">
     <h2 class="text-4xl font-bold mb-2">Información del servidor</h2>
@@ -9,9 +5,8 @@
   </div>
 
   <div class="flex flex-col md:flex-row gap-6 max-w-6xl mx-auto bg-white/5 backdrop-blur-md p-8 rounded-2xl shadow-lg">
-    <!-- Sidebar Tabs -->
+
     <div id="button-container" class="flex flex-col w-full md:w-1/4 space-y-2">
-      <!-- Botones generados por JS -->
     </div>
 
     <!-- Content Display -->
@@ -22,7 +17,6 @@
   </div>
 </div>
 
-<!-- Asegúrate de tener Font Awesome en tu layout/base -->
 <script>
   const buttonContainer = document.getElementById('button-container');
   const contentTitle = document.getElementById('content-title');
@@ -31,16 +25,28 @@
   const astroData = [
     {
       name: 'Whitelist +18',
-      title: 'Whitelist +18',
-      description: 'Filtramos a los usuarios que no cumplen con los requisitos de edad para acceder al contenido +18.',
+      title: 'Acceso exclusivo +18',
+      description: 'Garantizamos una experiencia madura y responsable filtrando a los usuarios que no cumplen con los requisitos de edad para acceder al contenido +18.',
       iconClass: 'fa-user-shield'
     },
     {
       name: 'Servidor optimizado',
-      title: 'Servidor optimizado',
-      description: 'Optimizamos el servidor para mejorar el rendimiento y la velocidad de carga del contenido.',
+      title: 'Rendimiento superior',
+      description: 'Nuestro servidor está optimizado para ofrecer una experiencia fluida, sin lag, y con tiempos de carga mínimos, ideal para un roleplay inmersivo.',
       iconClass: 'fa-gauge-high'
     },
+    {
+      name: 'Rol inmersivo',
+      title: 'Sistema de roles realista',
+      description: 'Contamos con un sistema de roles bien estructurado que permite desarrollar historias profundas y realistas, fomentando el roleplay serio y coherente.',
+      iconClass: 'fa-mask'
+    },
+    {
+      name: 'Comunidad activa',
+      title: 'Comunidad activa y moderada',
+      description: 'Nuestro equipo de moderación asegura un ambiente sano y respetuoso, con eventos frecuentes y jugadores comprometidos con el roleo.',
+      iconClass: 'fa-users'
+    }
   ];
 
   astroData.forEach((item, index) => {
