@@ -1,0 +1,67 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import MultiStepForm from '../../components/MultiStepForm.astro';
+import "../../styles/global.css";
+
+// Lógica de validación de sesión y obtención de datos del usuario de Discord
+const SESSION_COOKIE_NAME = 'dsc_access_token';
+const sessionCookie = Astro.cookies.get(SESSION_COOKIE_NAME);
+let user = null;
+
+if (sessionCookie) {
+  try {
+    const origin = Astro.url.origin;
+    const userDataResponse = await fetch(`${origin}/api/user/data`, {
+      headers: Astro.request.headers
+    });
+    
+    if (userDataResponse.ok) {
+      user = await userDataResponse.json();
+    } else {
+      Astro.cookies.delete(SESSION_COOKIE_NAME);
+    }
+  } catch (e) {
+    console.error("Error en la validación de la sesión:", e);
+    Astro.cookies.delete(SESSION_COOKIE_NAME);
+  }
+}
+
+// Estructura del formulario
+const requirements = `
+  <p class="italic text-sm mb-4">
+    Por favor, revisa los siguientes requisitos obligatorios antes de continuar con la postulación.
+  </p>
+  <h3 class="text-xl font-bold mb-2 text-white">REQUISITOS</h3>
+  <ul class="list-disc list-inside space-y-1 mb-4 pl-4">
+    <li>Tener más de 18 años.</li>
+    <li>Tener actividad semanal.</li>
+    <li>Tener amplio conocimiento de la normativa.</li>
+  </ul>
+`;
+
+const formSteps = [
+  {
+    title: 'Datos del Creador de Contenido',
+    fields: [
+      { name: 'nombre', label: 'Nombre de Discord', value: user?.username, readonly: true, isBaseData: true },
+      { name: 'discord_id', label: 'Discord ID', value: user?.id, readonly: true, isBaseData: true },
+      { name: 'edad_ooc', label: 'Edad (OOC)', placeholder: '+18', required: true, min: 18 },
+      { name: 'url_steam', label: 'Enlace del Perfil de Steam', placeholder: 'https://steamcommunity.com/id/...', required: true },
+      { name: 'url_canales', label: 'Enlace de los canales de retransmisión', placeholder: 'Twitch, YouTube, etc.', required: true },
+      { name: 'horario_actividad', label: 'Horario de Actividad', placeholder: 'Detalla tu disponibilidad', required: true },
+    ]
+  }
+];
+---
+
+<Layout title="Postulación Creador de Contenido">
+  <div class="container mx-auto p-8 text-gray-200 min-h-screen bg-black">
+    <MultiStepForm
+      title="Postulación Creador de Contenido"
+      requirements={requirements}
+      steps={formSteps}
+      user={user}
+      formType="creador-de-contenido"
+    />
+  </div>
+</Layout>

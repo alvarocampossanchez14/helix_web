@@ -1,0 +1,84 @@
+---
+// src/components/ListDynamicAstroSection.astro
+---
+
+<div class="w-full px-4 py-12  text-white bg-black/50" id="informacion">
+  <div class="max-w-6xl mx-auto flex flex-col items-center text-center">
+    <h2 class="text-4xl font-bold mb-2">Información del servidor</h2>
+    <p class="text-lg text-gray-400 mb-10">Detalles sobre la configuración y el estado del servidor.</p>
+  </div>
+
+  <div class="flex flex-col md:flex-row gap-6 max-w-6xl mx-auto bg-white/5 backdrop-blur-md p-8 rounded-2xl shadow-lg">
+    <!-- Sidebar Tabs -->
+    <div id="button-container" class="flex flex-col w-full md:w-1/4 space-y-2">
+      <!-- Botones generados por JS -->
+    </div>
+
+    <!-- Content Display -->
+    <div class="w-full md:w-3/4 bg-white/5 p-6 rounded-xl shadow-inner flex flex-col items-center justify-center text-center transition-all duration-300">
+      <h3 id="content-title" class="text-2xl font-semibold mb-4"></h3>
+      <p id="content-description" class="text-gray-300 leading-relaxed"></p>
+    </div>
+  </div>
+</div>
+
+<!-- Asegúrate de tener Font Awesome en tu layout/base -->
+<script>
+  const buttonContainer = document.getElementById('button-container');
+  const contentTitle = document.getElementById('content-title');
+  const contentDescription = document.getElementById('content-description');
+
+  const astroData = [
+    {
+      name: 'Whitelist +18',
+      title: 'Whitelist +18',
+      description: 'Filtramos a los usuarios que no cumplen con los requisitos de edad para acceder al contenido +18.',
+      iconClass: 'fa-user-shield'
+    },
+    {
+      name: 'Servidor optimizado',
+      title: 'Servidor optimizado',
+      description: 'Optimizamos el servidor para mejorar el rendimiento y la velocidad de carga del contenido.',
+      iconClass: 'fa-gauge-high'
+    },
+  ];
+
+  astroData.forEach((item, index) => {
+    const button = document.createElement('button');
+    button.className = 'tab-button flex items-center w-full px-4 py-3 rounded-lg transition-all duration-200 text-left text-white hover:bg-white/10 focus:outline-none';
+
+    const icon = document.createElement('i');
+    icon.className = `fas ${item.iconClass} text-white mr-3 text-lg`;
+
+    const label = document.createElement('span');
+    label.textContent = item.name;
+
+    button.appendChild(icon);
+    button.appendChild(label);
+    button.dataset.index = index;
+
+    buttonContainer.appendChild(button);
+  });
+
+  const tabButtons = document.querySelectorAll('.tab-button');
+
+  function updateContent(index) {
+    const data = astroData[index];
+    contentTitle.textContent = data.title;
+    contentDescription.textContent = data.description;
+  }
+
+  tabButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      tabButtons.forEach(btn => btn.classList.remove('bg-white/10', 'font-semibold'));
+      button.classList.add('bg-white/10', 'font-semibold');
+      const index = button.dataset.index;
+      updateContent(index);
+    });
+  });
+
+  if (tabButtons.length > 0) {
+    tabButtons[0].classList.add('bg-white/10', 'font-semibold');
+    updateContent(0);
+  }
+</script>

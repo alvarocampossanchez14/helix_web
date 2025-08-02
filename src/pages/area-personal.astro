@@ -1,0 +1,192 @@
+---
+export const prerender = false;
+
+import { object } from 'astro:schema';
+import Layout from '../layouts/Layout.astro';
+import "../styles/global.css";
+
+import { getUserAndRoles } from '../utils/auth.js';
+
+const { user, hasStaffRole } = await getUserAndRoles(
+  Astro.cookies,
+  import.meta.env.SESSION_COOKIE_NAME,
+  import.meta.env.STAFF_ROLE_ID,
+  Astro.url.origin
+);
+
+let allFormStatuses = {};
+let submittedForms = [];
+
+if (user) {
+  try {
+    // CORRECCIÓN: Usamos la ruta de API correcta para el estado general de los formularios
+    const formStatusResponse = await fetch(`${Astro.url.origin}/api/form-status`);
+    if (formStatusResponse.ok) {
+      allFormStatuses = await formStatusResponse.json();
+      console.log("Estados de los formularios:", allFormStatuses);
+    }
+
+    // NUEVO: Obtenemos los formularios ya enviados por el usuario
+    const submissionsResponse = await fetch(`${Astro.url.origin}/api/user/submissions`, {
+        headers: Astro.request.headers
+    });
+    if (submissionsResponse.ok) {
+      const submissionsData = await submissionsResponse.json();
+      // Asumimos que la respuesta es un array de nombres de formularios, e.g., ['staff']
+      submittedForms = submissionsData.submittedForms;
+      console.log("Formularios enviados por el usuario:", submittedForms);
+    }
+  } catch (e) {
+    console.error("Error al obtener datos de los formularios:", e);
+  }
+}
+
+// Definimos todos los enlaces posibles y sus nombres de formulario
+const accessLinks = [
+  { 
+    title: 'POSTULACIÓN STAFF - HELIX STUDIO', 
+    description: 'Accede al formulario para crear o editar tu ficha de personaje.', 
+    url: '/formularios/staff',
+    form_name: 'staff' 
+  },
+  {
+    title: 'POSTULACIÓN CREADOR DE CONTENIDO - HELIX STUDIO',
+    description: 'Formulario para ser creador de contenido.',
+    url: '/formularios/content-creator',
+    form_name: 'content-creator' 
+  },
+  {
+    title: 'POSTULACIÓN FACCIONES ILEGALES - HELIX STUDIO',
+    description: 'Formulario de ilegales.',
+    url: '/formularios/ilegal',
+    form_name: 'ilegal'
+  },
+  {
+    title: 'POSTULACIÓN DE EMPRESAS - HELIX STUDIO',
+    description: 'Formulario para empresas.',
+    url: '/formularios/bussiness',
+    form_name: 'bussiness'
+  },
+  
+];
+
+// Mapeamos los enlaces con el estado dinámico obtenido de la API y el estado de envío
+const processedLinks = accessLinks.map(link => ({
+  ...link,
+  isFormEnabled: allFormStatuses[link.form_name] ?? false,
+  isSubmitted: submittedForms.includes(link.form_name)
+}));
+
+// Filtramos los enlaces visibles para el usuario logueado
+const visibleLinks = user ? processedLinks : [];
+
+const loginUrl = '/api/auth/login';
+---
+
+<Layout>
+  <div class="flex flex-col lg:flex-row min-h-screen text-white bg-gradient-to-b from-[#121212] via-[#1a1a1a]/80 to-[#121212] px-6 py-10">
+
+    <aside class="w-full lg:w-80 bg-black/20 backdrop-blur-md rounded-lg border border-white/10 p-6 flex flex-col justify-between lg:sticky top-10 max-h-[calc(100vh-80px)]">
+      {user ? (
+        <>
+          <div class="flex flex-col items-center text-center space-y-4">
+            <img 
+              src={`https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`} 
+              alt={`Avatar de ${user.username}`} 
+              class="w-24 h-24 rounded-full shadow-md"
+              loading="lazy"
+            />
+            <h2 class="text-2xl font-semibold tracking-tight">{user.username}</h2>
+            <p class="text-xs text-gray-400 select-text">ID de Usuario: {user.id}</p>
+          </div>
+
+          <div class="mt-10 flex flex-col gap-4">
+            {hasStaffRole && (
+              <a 
+                href="/admin" 
+                class="block text-center py-3 border border-white/30 rounded-md font-medium tracking-wide text-white/90 hover:bg-white/10 transition focus:outline-none focus:ring-2 focus:ring-white/50"
+              >
+                Panel de Administración
+              </a>
+            )}
+            <a 
+              href="/" 
+              class="block text-center py-3 border border-white/30 rounded-md font-medium tracking-wide text-white/90 hover:bg-white/10 transition focus:outline-none focus:ring-2 focus:ring-white/50"
+            >
+              Volver al Inicio
+            </a>
+            <a 
+              href="/api/auth/logout" 
+              class="block text-center py-3 border border-white/30 rounded-md font-medium tracking-wide text-white/90 hover:bg-red-700/30 transition focus:outline-none focus:ring-2 focus:ring-red-600"
+            >
+              Cerrar Sesión
+            </a>
+          </div>
+        </>
+      ) : (
+        <div class="flex flex-col items-center justify-center h-full space-y-6 px-4 text-center">
+          <p class="text-lg font-medium tracking-wide">Por favor, inicia sesión para acceder a esta área.</p>
+          <a 
+            href={loginUrl} 
+            class="inline-block px-8 py-3 border border-white/40 rounded-md font-semibold tracking-wide text-white hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/60 transition"
+            aria-label="Iniciar sesión con Discord"
+          >
+            Iniciar Sesión con Discord
+          </a>
+        </div>
+      )}
+    </aside>
+
+    <main class="flex-grow w-full lg:ml-12 max-w-6xl">
+      <h1 class="text-4xl font-extrabold mb-12 text-center lg:text-left tracking-tight">Panel de Herramientas</h1>
+ 
+      {user && (
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+          {visibleLinks.map(link => (
+            link.isSubmitted ? (
+              // NUEVO: Enlace deshabilitado si ya ha sido enviado
+              <div
+                class="block rounded-lg border border-white/10 opacity-50 backdrop-blur-md p-6 flex flex-col justify-center shadow-sm"
+                key={link.url}
+              >
+                <h3 class="text-2xl font-semibold mb-2">{link.title}</h3>
+                <p class="text-gray-300 font-medium text-sm leading-relaxed">{link.description}</p>
+                <span class="mt-2 inline-block bg-green-600/30 text-green-300 text-xs font-semibold px-2 py-1 rounded-full w-fit">
+                  Ya Enviado
+                </span>
+              </div>
+            ) : link.isFormEnabled ? (
+              // Enlace activo si el formulario está habilitado
+              <a 
+                href={link.url} 
+                class="block rounded-lg border border-white/10 hover:border-white/40 backdrop-blur-md p-6 flex flex-col justify-center shadow-sm transition hover:-translate-y-1 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-white/50"
+                key={link.url}
+                tabindex="0"
+                aria-label={`${link.title}: ${link.description}`}
+              >
+                <h3 class="text-2xl font-semibold mb-2">{link.title}</h3>
+                <p class="text-gray-300 font-medium text-sm leading-relaxed">{link.description}</p>
+                <span class="mt-2 text-white font-medium">
+                  Acceder al formulario <i class="fas fa-arrow-right ml-2"></i>
+                </span>
+              </a>
+            ) : (
+              // Enlace deshabilitado si el formulario está cerrado
+              <div
+                class="block rounded-lg border border-white/10 opacity-50 backdrop-blur-md p-6 flex flex-col justify-center shadow-sm"
+                key={link.url}
+              >
+                <h3 class="text-2xl font-semibold mb-2">{link.title}</h3>
+                <p class="text-gray-300 font-medium text-sm leading-relaxed">{link.description}</p>
+                <span class="mt-2 inline-block bg-red-600/30 text-red-300 text-xs font-semibold px-2 py-1 rounded-full w-fit">
+                  Cerrado
+                </span>
+              </div>
+            )
+          ))}
+        </div>
+      )}
+    </main>
+
+  </div>
+</Layout>

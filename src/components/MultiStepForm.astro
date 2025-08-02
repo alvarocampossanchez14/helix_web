@@ -1,0 +1,180 @@
+---
+// Definimos las props que el componente espera recibir
+const { title, requirements, steps, user, formType } = Astro.props;
+
+// Función para obtener el tipo de input del campo
+const getFieldType = (name) => {
+  if (name.includes('edad')) return 'number';
+  if (name.includes('url')) return 'url';
+  if (name.includes('correo')) return 'email';
+  if (name.includes('password')) return 'password';
+  return 'text';
+};
+---
+
+<!-- Se agrega el atributo 'novalidate' para que la validación la maneje nuestro JS -->
+<form id="multi-step-form" class="bg-black bg-opacity-70 p-8 rounded-lg shadow-xl max-w-2xl mx-auto border border-white" novalidate>
+  <input type="hidden" name="tipo_formulario" value={formType}>
+
+  <h1 class="text-4xl font-bold text-center mb-8 tracking-wide text-white uppercase">{title}</h1>
+
+  <!-- Paso 1: Requisitos (si existen) -->
+  {requirements && (
+    <div id="step-0" class="form-step">
+      <h2 class="text-2xl font-bold mb-6 text-white uppercase tracking-wide border-b border-white pb-2">Paso 1: Requisitos</h2>
+      <div class="mb-4 text-white">
+        <!-- Renderizamos los requisitos desde el prop -->
+        <div set:html={requirements} />
+      </div>
+      <div class="text-right mt-6">
+        <button type="button" class="next-step-btn bg-white hover:bg-opacity-80 font-bold py-3 px-8 rounded-lg transition-colors duration-300 uppercase text-black">Comenzar Formulario</button>
+      </div>
+    </div>
+  )}
+
+  <!-- Renderizamos los pasos del formulario dinámicamente -->
+  {steps.map((step, index) => (
+    <div id={`step-${index + (requirements ? 1 : 0)}`} class={`form-step ${index > 0 || !requirements ? 'hidden' : ''}`}>
+      <h2 class="text-2xl font-bold mb-6 text-white uppercase tracking-wide border-b border-white pb-2">Paso {index + (requirements ? 2 : 1)}: {step.title}</h2>
+      {step.fields.map(field => (
+        <div class="mb-4">
+          <label for={field.name} class="block text-white mb-2">{field.label}</label>
+          {field.type === 'textarea' ? (
+            <textarea
+              id={field.name}
+              name={`otros_datos[${field.name}]`}
+              rows="4"
+              placeholder={field.placeholder}
+              class="w-full p-3 bg-black border border-white rounded-lg focus:outline-none focus:border-white text-white"
+              required={field.required}
+            >{field.value}</textarea>
+          ) : (
+            <input
+              type={field.type || getFieldType(field.name)}
+              id={field.name}
+              name={field.isBaseData ? field.name : `otros_datos[${field.name}]`}
+              placeholder={field.placeholder}
+              value={field.value}
+              readonly={field.readonly}
+              class="w-full p-3 bg-black border border-white rounded-lg focus:outline-none focus:border-white text-white"
+              required={field.required}
+              min={field.min}
+            />
+          )}
+        </div>
+      ))}
+      <div class="flex justify-between mt-6">
+        <button type="button" class="prev-step-btn bg-transparent border border-white hover:bg-white font-bold py-3 px-8 rounded-lg transition-colors duration-300 uppercase text-white hover:text-black">Anterior</button>
+        {index < steps.length - 1 ? (
+          <button type="button" class="next-step-btn bg-white hover:bg-opacity-80 font-bold py-3 px-8 rounded-lg transition-colors duration-300 uppercase text-black">Siguiente</button>
+        ) : (
+          <button type="submit" class="bg-white hover:bg-opacity-80 font-bold py-3 px-8 rounded-lg transition-colors duration-300 uppercase text-black">Enviar Postulación</button>
+        )}
+      </div>
+    </div>
+  ))}
+</form>
+
+<!-- Contenedor para las notificaciones, necesario para que el JS funcione -->
+<div id="notification-container" class="fixed bottom-0 right-0 p-4 z-50"></div>
+
+<script>
+  import { showNotification } from '../utils/notification.js';
+
+  const form = document.getElementById('multi-step-form');
+  const steps = document.querySelectorAll('.form-step');
+  let currentStep = 0;
+
+  function showStep(stepIndex) {
+    steps.forEach((step, index) => {
+      step.style.display = index === stepIndex ? 'block' : 'none';
+    });
+  }
+
+  document.querySelectorAll('.next-step-btn').forEach(button => {
+    button.addEventListener('click', () => {
+      let allValid = true;
+      const currentStepElement = steps[currentStep];
+      const requiredFields = currentStepElement.querySelectorAll('[required]');
+
+      requiredFields.forEach(field => {
+        if (!field.value) {
+          allValid = false;
+          field.classList.add('border-red-500');
+        } else {
+          field.classList.remove('border-red-500');
+        }
+      });
+      
+      if (allValid) {
+        currentStep++;
+        showStep(currentStep);
+      } else {
+        showNotification('Por favor, rellena todos los campos obligatorios.', 'error');
+      }
+    });
+  });
+
+  document.querySelectorAll('.prev-step-btn').forEach(button => {
+    button.addEventListener('click', () => {
+      currentStep--;
+      showStep(currentStep);
+    });
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const submitButton = form.querySelector('button[type="submit"]');
+    submitButton.disabled = true;
+    submitButton.textContent = 'Enviando...';
+    
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    const otrosDatos = {};
+    for (const [key, value] of Object.entries(data)) {
+        if (key.startsWith('otros_datos[')) {
+            const newKey = key.slice(12, -1);
+            otrosDatos[newKey] = value;
+            delete data[key];
+        }
+    }
+    data['otros_datos'] = otrosDatos;
+    
+    try {
+      const dbResponse = await fetch('/api/aplicaciones', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!dbResponse.ok) {
+        const dbResult = await dbResponse.json();
+        throw new Error(dbResult.message || 'Error al guardar en la base de datos.');
+      }
+
+      const discordResponse = await fetch('/api/discord-formularios', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+      });
+      
+      if (!discordResponse.ok) {
+          const discordResult = await discordResponse.json();
+          throw new Error(discordResult.message || 'Error al enviar a Discord.');
+      }
+
+      showNotification('Postulación enviada con éxito. ¡Gracias!', 'success');
+
+    } catch (error) {
+      console.error('Error:', error);
+      showNotification(`Error: ${error.message}`, 'error');
+    } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = 'Enviar Postulación';
+    }
+  });
+
+  showStep(0);
+</script>

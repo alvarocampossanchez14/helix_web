@@ -1,0 +1,82 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import MultiStepForm from '../../components/MultiStepForm.astro';
+import "../../styles/global.css";
+
+// 1. Nombre de la cookie de sesión, aseguramos la consistencia.
+const SESSION_COOKIE_NAME =  import.meta.env.SESSION_COOKIE_NAME;
+
+// Lógica de validación de sesión y obtención de datos del usuario de Discord en el servidor
+const sessionCookie = Astro.cookies.get(SESSION_COOKIE_NAME);
+let user = null;
+
+if (sessionCookie) {
+  try {
+    const origin = Astro.url.origin;
+    
+    const userDataResponse = await fetch(`${origin}/api/user/data`, {
+      headers: Astro.request.headers
+    });
+    
+    if (userDataResponse.ok) {
+      user = await userDataResponse.json();
+    } else {
+      Astro.cookies.delete(SESSION_COOKIE_NAME);
+    }
+  } catch (e) {
+    console.error("Error en la validación de la sesión:", e);
+    Astro.cookies.delete(SESSION_COOKIE_NAME);
+  }
+}
+
+
+const requirements = `
+  <p class="mb-4">
+    Bienvenido al formulario de formalización de ingresos a la administración de Reflex Studio.
+    Por favor, revisa detenidamente todos los datos solicitados y asegúrate de completar todos los apartados correctamente. Recuerda que, una vez enviado el formulario, no podrás volver a acceder hasta que se conozca la resolución del mismo.
+  </p>
+  <h3 class="text-xl font-bold mb-2 text-white">REQUISITOS</h3>
+  <ul class="list-disc list-inside space-y-1 mb-4 pl-4">
+    <li>Estar comprometido con el servidor y con las directrices establecidas por la administración.</li>
+    <li>Mantener una actividad estable dentro del servidor.</li>
+    <li>No contar con sanciones activas dentro del servidor.</li>
+    <li>Informar detalladamente todos los aspectos solicitados dentro de este formulario.</li>
+  </ul>
+  <p class="italic text-sm">
+    Para que su solicitud sea aceptada, es imprescindible completar este formulario de manera correcta, proporcionando respuestas detalladas en todos los puntos requeridos. Asegúrese de incluir la información necesaria y seguir las instrucciones al pie de la letra para evitar demoras en el proceso de selección.
+  </p>
+`;
+
+const formSteps = [
+  {
+    title: 'Datos Personales',
+    fields: [
+      { name: 'nombre', label: 'Nombre de Discord', value: user?.username, readonly: true, isBaseData: true },
+      { name: 'discord_id', label: 'Discord ID', value: user?.id, readonly: true, isBaseData: true },
+      { name: 'edad_ooc', label: 'Edad (OOC)', placeholder: '+18', required: true, min: 18 },
+      { name: 'url_steam', label: 'URL del perfil de Steam', placeholder: 'https://steamcommunity.com/id/...', required: true }
+    ]
+  },
+  {
+    title: 'Experiencia y Motivación',
+    fields: [
+      { name: 'experiencia_staff', label: '¿Tienes experiencia de STAFF en otros servidores? Si es así, ¿en cuáles?', type: 'textarea', required: true },
+      { name: 'por_que_staff', label: '¿Por qué quieres ser STAFF?', type: 'textarea', required: true },
+      { name: 'por_que_elegirnos', label: '¿Por qué crees que deberíamos elegirte?', type: 'textarea', required: true },
+      { name: 'horario', label: 'Horario disponible', required: true }
+    ]
+  }
+];
+---
+
+<Layout title="Postulación Staff">
+  <div class="container mx-auto p-8 text-gray-200 min-h-screen bg-black">
+    <MultiStepForm
+      title="Postulación Staff"
+      requirements={requirements}
+      steps={formSteps}
+      user={user}
+      formType="staff"
+    />
+  </div>
+</Layout>

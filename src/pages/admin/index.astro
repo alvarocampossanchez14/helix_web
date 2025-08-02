@@ -1,0 +1,172 @@
+---
+// Importaciones de utilidades y componentes de Astro
+import Layout from '../../layouts/Layout.astro';
+import "../../styles/global.css";
+import db from '../../db';
+
+import { getUserAndRoles } from '../../utils/auth.js';
+
+// Obtenemos los datos del usuario y sus roles, verificando si es staff
+const { user, hasStaffRole } = await getUserAndRoles(
+  Astro.cookies, 
+  import.meta.env.SESSION_COOKIE_NAME,
+  import.meta.env.STAFF_ROLE_ID,
+  Astro.url.origin
+);
+
+let uniqueFormTypes = [];
+let pendingCountsMap = new Map();
+let formStatuses = {};
+
+if (user && hasStaffRole) {
+    // Obtenemos todos los tipos de formularios de la tabla 'aplicaciones'
+    [uniqueFormTypes] = await db.execute('SELECT DISTINCT tipo_formulario FROM aplicaciones');
+
+    // Obtenemos el conteo de postulaciones pendientes para cada tipo de formulario
+    const [pendingCounts] = await db.execute(
+        'SELECT tipo_formulario, COUNT(*) as count FROM aplicaciones WHERE estado = "pendiente" GROUP BY tipo_formulario'
+    );
+    pendingCountsMap = new Map(pendingCounts.map(item => [item.tipo_formulario, item.count]));
+
+    // Obtenemos el estado de habilitación de todos los formularios
+    try {
+        const formStatusResponse = await fetch(`${Astro.url.origin}/api/form-status`);
+        if (formStatusResponse.ok) {
+            formStatuses = await formStatusResponse.json();
+        }
+    } catch (e) {
+        console.error("Error al obtener el estado de los formularios:", e);
+    }
+}
+---
+
+<Layout title="Panel de Administración">
+    <main class="container mx-auto p-8 text-white min-h-screen bg-black">
+        {user && hasStaffRole ? (
+            <>
+                <h1 class="text-4xl font-bold mb-8">Panel de Administración</h1>
+                <p class="text-gray-400 text-lg mb-6">Gestiona las herramientas y postulaciones del servidor.</p>
+
+                <!-- Sección de Gestión de Formularios -->
+                <div class="bg-black/50 border border-white/20 p-6 rounded-lg shadow-xl mb-8">
+                    <h2 class="text-2xl font-semibold mb-4">Gestión de Formularios</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+                        <!-- Mapeamos cada tipo de formulario para crear su control -->
+                        {Object.entries(formStatuses).map(([formName, isEnabled]) => {
+                            const displayName = formName.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                            return (
+                                <div class="flex items-center justify-between p-4 bg-white/5 rounded-lg border border-white/10">
+                                    <div>
+                                        <p class="text-gray-400">Estado del formulario de <span class="font-bold">{displayName}</span>:</p>
+                                        <span class={`form-status font-bold text-lg ${isEnabled ? 'text-green-400' : 'text-red-400'}`}
+                                            data-form-name={formName}>
+                                            {isEnabled ? 'Abierto' : 'Cerrado'}
+                                        </span>
+                                    </div>
+                                    <button 
+                                        class={`toggle-form-btn px-6 py-2 rounded-lg font-semibold transition duration-200 ${isEnabled ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}
+                                        data-form-name={formName}
+                                    >
+                                        {isEnabled ? 'Cerrar' : 'Abrir'}
+                                    </button>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+                
+                <!-- Sección de Postulaciones Pendientes -->
+                <h2 class="text-2xl font-bold mb-4">Postulaciones Pendientes</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {uniqueFormTypes.map(({ tipo_formulario }) => {
+                        const pendingCount = pendingCountsMap.get(tipo_formulario) || 0;
+                        return (
+                            <div class="bg-black/50 border border-white/20 p-6 rounded-lg shadow-xl hover:bg-white/10 transition duration-200 flex flex-col justify-between">
+                                <div>
+                                    <h3 class="text-2xl font-semibold capitalize mb-2">
+                                        {tipo_formulario.replace(/_/g, ' ')}
+                                    </h3>
+                                    <p class="text-gray-400 text-sm mb-4">
+                                        Postulaciones pendientes: <span class="font-bold text-lg text-indigo-400">{pendingCount}</span>
+                                    </p>
+                                </div>
+                                <div class="mt-4 flex justify-end gap-2">
+                                    <a href={`/admin/${tipo_formulario}`} class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg font-semibold transition duration-200">
+                                        Acceder
+                                    </a>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </>
+        ) : (
+            <div class="flex flex-col items-center justify-center min-h-screen -mt-20">
+                <h2 class="text-5xl font-bold text-red-500 mb-4">Acceso Denegado</h2>
+                <p class="text-white text-lg">No tienes permisos para ver este contenido. Por favor, inicia sesión con una cuenta de staff.</p>
+            </div>
+        )}
+
+        <div id="notification-container" class="fixed bottom-0 right-0 p-4 z-50"></div>
+    </main>
+</Layout>
+
+<script>
+    import { showNotification } from '../../utils/notification.js';
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        // Obtenemos todos los botones de alternancia
+        const toggleButtons = document.querySelectorAll('.toggle-form-btn');
+
+        toggleButtons.forEach(button => {
+            button.addEventListener('click', async () => {
+                const formName = button.dataset.formName;
+                const parentDiv = button.closest('div');
+                const statusSpan = parentDiv.querySelector('.form-status');
+
+                if (!formName || !statusSpan) {
+                    console.error('No se pudo encontrar el nombre del formulario o el span de estado.');
+                    showNotification('Error interno del sistema.', 'error');
+                    return;
+                }
+
+                const currentState = statusSpan.textContent.trim() === 'Abierto';
+                const newState = !currentState;
+
+                button.textContent = 'Actualizando...';
+                button.disabled = true;
+
+                try {
+                    const response = await fetch('/api/toggle-form-status', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ form_name: formName, is_enabled: newState })
+                    });
+                    
+                    if (response.ok) {
+                        // Actualizar la interfaz de usuario dinámicamente
+                        statusSpan.textContent = newState ? 'Abierto' : 'Cerrado';
+                        statusSpan.classList.toggle('text-green-400', newState);
+                        statusSpan.classList.toggle('text-red-400', !newState);
+                        
+                        button.textContent = newState ? 'Cerrar' : 'Abrir';
+                        button.classList.toggle('bg-red-600', newState);
+                        button.classList.toggle('hover:bg-red-700', newState);
+                        button.classList.toggle('bg-green-600', !newState);
+                        button.classList.toggle('hover:bg-green-700', !newState);
+
+                        showNotification('Estado del formulario actualizado con éxito.', 'success');
+                    } else {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Error desconocido.');
+                    }
+                } catch (error) {
+                    console.error('Error al actualizar el estado:', error);
+                    showNotification(`Error al actualizar: ${error.message}`, 'error');
+                } finally {
+                    button.disabled = false;
+                }
+            });
+        });
+    });
+</script>

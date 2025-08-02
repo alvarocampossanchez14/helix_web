@@ -1,0 +1,88 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import MultiStepForm from '../../components/MultiStepForm.astro';
+import "../../styles/global.css";
+
+const SESSION_COOKIE_NAME = 'dsc_access_token';
+const sessionCookie = Astro.cookies.get(SESSION_COOKIE_NAME);
+let user = null;
+
+if (sessionCookie) {
+  try {
+    const origin = Astro.url.origin;
+    const userDataResponse = await fetch(`${origin}/api/user/data`, {
+      headers: Astro.request.headers
+    });
+    
+    if (userDataResponse.ok) {
+      user = await userDataResponse.json();
+    } else {
+      Astro.cookies.delete(SESSION_COOKIE_NAME);
+    }
+  } catch (e) {
+    console.error("Error en la validación de la sesión:", e);
+    Astro.cookies.delete(SESSION_COOKIE_NAME);
+  }
+}
+
+// Estructura del formulario
+const requirements = `
+  <p class="mb-4">
+    📄 FORMULARIO COMPLETO DE POSTULACIÓN A LOCAL
+  </p>
+  <p class="mb-4">
+    Se valorarán especialmente aquellos proyectos y organizaciones que fomenten el rol de calidad dentro del servidor, con propuestas bien desarrolladas y enfocadas en la interacción con otros jugadores.
+  </p>
+  <p class="mb-4">
+    Rogamos que las postulaciones presentadas estén bien estructuradas, detalladas y cuidadas en su redacción, guardando la estructura del formato.
+  </p>
+`;
+
+const formSteps = [
+  {
+    title: 'Datos Generales',
+    fields: [
+      { name: 'nombre', label: 'Nombre de Discord', value: user?.username, readonly: true, isBaseData: true },
+      { name: 'discord_id', label: 'Discord ID', value: user?.id, readonly: true, isBaseData: true },
+      { name: 'nombre_personaje', label: 'Nombre del personaje (IC)', placeholder: 'Nombre completo de tu personaje', required: true },
+      { name: 'edad', label: 'Edad (IC / OOC)', placeholder: 'Edad del personaje / Edad real', required: true },
+      { name: 'pais_zona_horaria', label: 'País y zona horaria (OOC)', placeholder: 'Esto ayuda a coordinar mejor horarios de apertura', required: true }
+    ]
+  },
+  {
+    title: 'Información del Negocio',
+    fields: [
+      { name: 'descripcion_negocio', label: 'Descripción detallada del negocio', type: 'textarea', placeholder: '¿Qué tipo de servicios ofrecerás? ¿Cómo se va a diferenciar de otros negocios?', required: true }
+    ]
+  },
+  {
+    title: 'Funcionamiento y Organización',
+    fields: [
+      { name: 'equipo_trabajo', label: '¿Trabajarás solo/a o con un equipo?', type: 'textarea', placeholder: 'Explica si ya tienes un equipo armado, cuántos miembros son, qué roles ocuparán...', required: true },
+      { name: 'contrataciones_ic', label: '¿Abrirás contrataciones IC?', type: 'textarea', placeholder: 'Sí / No. ¿Qué tipo de perfiles buscarás?', required: true },
+      { name: 'rangos_internos', label: '¿Tendrás rangos o estructura interna?', type: 'textarea', placeholder: 'Explica cómo se organizarán dentro del local', required: true },
+      { name: 'horario_apertura', label: 'Horario aproximado de apertura (IC)', placeholder: 'Días de la semana y franjas horarias', required: true }
+    ]
+  },
+  {
+    title: 'Propuestas de Roleo',
+    fields: [
+      { name: 'ideas_roleo', label: 'Ideas de tramas o eventos', type: 'textarea', placeholder: 'Detalla 2 o 3 ideas que tengas pensadas para generar rol', required: true },
+      { name: 'colaboraciones', label: '¿Piensas colaborar con otros negocios o facciones?', type: 'textarea', placeholder: '¿Con quién te gustaría colaborar? ¿Cómo ves esas posibles conexiones?', required: true },
+      { name: 'aporte_servidor', label: '¿Qué aportará tu negocio al servidor?', type: 'textarea', placeholder: 'Habla de tu visión, tu compromiso y cómo planeas mantener activa la propuesta', required: true }
+    ]
+  }
+];
+---
+
+<Layout title="Postulación Local">
+  <div class="container mx-auto p-8 text-gray-200 min-h-screen bg-black">
+    <MultiStepForm
+      title="Postulación Local"
+      requirements={requirements}
+      steps={formSteps}
+      user={user}
+      formType="local"
+    />
+  </div>
+</Layout>

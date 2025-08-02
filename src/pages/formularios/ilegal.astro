@@ -1,0 +1,74 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import MultiStepForm from '../../components/MultiStepForm.astro';
+import "../../styles/global.css";
+
+// Lógica de validación de sesión y obtención de datos del usuario de Discord
+const SESSION_COOKIE_NAME = 'dsc_access_token';
+const sessionCookie = Astro.cookies.get(SESSION_COOKIE_NAME);
+let user = null;
+
+if (sessionCookie) {
+  try {
+    const origin = Astro.url.origin;
+    const userDataResponse = await fetch(`${origin}/api/user/data`, {
+      headers: Astro.request.headers
+    });
+    
+    if (userDataResponse.ok) {
+      user = await userDataResponse.json();
+    } else {
+      Astro.cookies.delete(SESSION_COOKIE_NAME);
+    }
+  } catch (e) {
+    console.error("Error en la validación de la sesión:", e);
+    Astro.cookies.delete(SESSION_COOKIE_NAME);
+  }
+}
+
+// Estructura del formulario
+const requirements = `
+  <p class="mb-4">
+    Se valorarán especialmente aquellos proyectos y organizaciones que fomenten el rol de calidad dentro del servidor, con propuestas bien desarrolladas y enfocadas en la interacción con otros jugadores.
+  </p>
+  <p class="mb-4">
+    Rogamos que las postulaciones presentadas estén bien estructuradas, detalladas y cuidadas en su redacción, guardando la estructura del formato.
+  </p>
+  <h3 class="text-xl font-bold mb-2 text-white">MIEMBROS MÍNIMOS</h3>
+  <ul class="list-disc list-inside space-y-1 mb-4 pl-4">
+    <li>5 (Adjuntar los Nombres IC y Discord ID al final del ticket).</li>
+  </ul>
+`;
+
+const formSteps = [
+  {
+    title: 'Información de la Organización',
+    fields: [
+      { name: 'nombre', label: 'Nombre de Discord (Líder)', value: user?.username, readonly: true, isBaseData: true },
+      { name: 'discord_id', label: 'Discord ID (Líder)', value: user?.id, readonly: true, isBaseData: true },
+      { name: 'historia_miembros', label: 'Historia de los miembros de la organización', type: 'textarea', placeholder: 'Historia, rasgos de personalidad, etc.', required: true },
+      { name: 'historia_grupo', label: 'Historia de cómo surge el grupo', type: 'textarea', placeholder: 'Inicios en el mundo criminal, etc.', required: true },
+      { name: 'vestimentas', label: 'Foto de un ejemplo sobre cómo serían vuestras vestimentas', placeholder: 'URL de la imagen o descripción detallada', required: true },
+      { name: 'rangos_jerarquia', label: 'Rangos y jerarquía', type: 'textarea', required: true },
+      { name: 'vehiculos', label: 'Vehículos lore de la organización', type: 'textarea', placeholder: 'Deberán ceñirse a la IDP de la organización', required: true },
+      { name: 'relacion_bandas_policia', label: 'Relación con otras bandas y con la policía', type: 'textarea', placeholder: 'Perfil alto o bajo', required: true },
+      { name: 'tipos_rol', label: '¿Qué tipos de rol tenéis pensado realizar?', type: 'textarea', placeholder: 'De manera legal o ilegal con el resto de personas', required: true },
+      { name: 'relacion_civiles', label: 'Relación con los civiles de vuestro barrio o entorno', type: 'textarea', required: true },
+      { name: 'objetivos_organizacion', label: 'Objetivos de la organización', type: 'textarea', required: true },
+      { name: 'miembros_info', label: 'Información de los miembros (Nombres IC y Discord ID)', type: 'textarea', required: true },
+    ]
+  }
+];
+---
+
+<Layout title="Postulación Facciones Ilegales">
+  <div class="container mx-auto p-8 text-gray-200 min-h-screen bg-black">
+    <MultiStepForm
+      title="Postulación Facciones Ilegales"
+      requirements={requirements}
+      steps={formSteps}
+      user={user}
+      formType="facciones-ilegales"
+    />
+  </div>
+</Layout>

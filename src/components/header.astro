@@ -1,0 +1,30 @@
+---
+// Lógica del servidor para Astro
+const isLogged = Astro.cookies.get(import.meta.env.SESSION_COOKIE_NAME) ? true : false;
+---
+<header class="fixed top-0 z-50 w-full flex justify-center items-center p-4 text-white bg-black/60 backdrop-blur-md shadow-lg">
+   <div class="max-w-5xl flex items-center justify-between w-full">
+        <div>
+            <a href="/">
+                <img src="/logo.png" alt="Logo" class="h-15 w-15 inline-block mr-2">
+            </a>
+        </div>
+
+        <nav>
+            <ul class="flex gap-2">
+                <li><a href="#informacion" class="border-gray-500 p-1 transition-all duration-150 text-white/40 hover:text-white">Información</a></li>
+                <li><a href="#faq" class=" border-gray-500 p-1 transition-all duration-150 text-white/40 hover:text-white">FAQ</a></li>
+                <li><a href="#streaming" class=" border-gray-500 p-1 transition-all duration-150 text-white/40 hover:text-white">Streaming</a></li>
+                <li><a href="#redes" class="p-1 transition-all duration-150 text-white/40 hover:text-white">Comunidad</a></li>
+            </ul>
+        </nav>
+
+        <div class="bg-white p-3 text-black rounded hover:scale-105 transition-all duration-150 hover:opacity-90">
+            {isLogged ? (
+                <a href="/area-personal">Área Personal</a>
+            ) : (
+                <a href="/api/auth/login">Iniciar Sesión</a>
+            )}
+        </div>
+   </div>
+</header>

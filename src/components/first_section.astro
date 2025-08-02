@@ -1,0 +1,35 @@
+<section class="relative z-10 w-full px-4 py-32 bg-black/50 text-white overflow-hidden items-center h-screen justify-center flex transition-fade">
+  <!-- Fondo con imagen y gradiente -->
+  <div class="absolute inset-0">
+    <div class="absolute inset-0 bg-[url('/src/assets/pantalla_helix.png')] bg-cover bg-center opacity-20"></div>
+    <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-black/30 to-transparent"></div>
+  </div>
+
+  <!-- Contenido centrado sin tarjeta -->
+  <div class="relative z-20 max-w-5xl mx-auto text-center px-6">
+    <h1 class="text-6xl md:text-8xl font-extrabold tracking-tight mb-6">HELIX</h1>
+    <p class="text-lg md:text-xl text-gray-300 font-light leading-relaxed mb-10">
+      No dudes en completar el formulario de inscripción para no perderte nada y comenzar a disfrutar del servidor cuanto antes.
+    </p>
+
+    <a href="#informacion" class="inline-block">
+      <button class="px-8 py-3 border border-white text-white uppercase tracking-wider font-medium rounded-xl hover:bg-white hover:text-black transition-colors duration-300">
+        Explorar el núcleo
+      </button>
+    </a>
+  </div>
+</section>
+
+<style>
+  .transition-fade::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 8rem;
+    pointer-events: none;
+    background: linear-gradient(180deg, transparent, rgba(0,0,0,0.8), #000);
+    z-index: 30;
+  }
+</style>

@@ -1,0 +1,149 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import "../../styles/global.css";
+import db from '../../db';
+
+export async function getStaticPaths() {
+    const [uniqueFormTypes] = await db.execute('SELECT DISTINCT tipo_formulario FROM aplicaciones');
+    return uniqueFormTypes.map(({ tipo_formulario }) => ({
+        params: { tipo_formulario },
+    }));
+}
+
+const { tipo_formulario } = Astro.params;
+
+// Obtener solo las aplicaciones del tipo de formulario actual
+const [aplicaciones] = await db.execute(
+    'SELECT * FROM aplicaciones WHERE tipo_formulario = ? ORDER BY fecha_envio DESC',
+    [tipo_formulario]
+);
+---
+
+<Layout title={`Panel de Administración | ${tipo_formulario.replace(/_/g, ' ')}`}>
+    <main class="container mx-auto p-8 text-white min-h-screen bg-black">
+        <div class="flex flex-row gap-4 items-center mb-8">
+            <a href="/admin" class="text-white hover:text-gray-400 mr-4">
+                &larr; Volver al Panel
+            </a>
+            <h1 class="text-4xl font-bold capitalize">
+                Postulaciones para {tipo_formulario.replace(/_/g, ' ')}
+            </h1>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {aplicaciones.map(app => (
+                <div class="bg-black p-6 rounded-lg shadow-xl flex flex-col justify-between border border-white">
+                    <div>
+                        <div class="flex items-center mb-2">
+                            <span class={`text-white text-xs font-semibold px-2 py-1 rounded-full ${app.estado === 'aceptada' ? 'bg-green-600' : app.estado === 'denegada' ? 'bg-red-600' : 'bg-indigo-500'}`}>{app.estado.toUpperCase()}</span>
+                            <span class="ml-auto text-gray-400 text-sm">{new Date(app.fecha_envio).toLocaleString()}</span>
+                        </div>
+                        <h2 class="text-xl font-bold mb-1 capitalize">{app.nombre}</h2>
+                        <p class="text-gray-400 text-sm mb-4">ID Discord: {app.discord_id}</p>
+                        
+                        {app.otros_datos && (
+                            <details class="mt-4">
+                                <summary class="font-bold text-white cursor-pointer hover:text-gray-400 transition-colors duration-200">
+                                    Ver detalles de la postulación
+                                </summary>
+                                <div class="bg-black p-4 rounded-lg text-sm text-white border border-white mt-2 max-h-64 overflow-y-auto">
+                                    {Object.entries(JSON.parse(app.otros_datos)).map(([key, value]) => (
+                                        <div class="mb-2">
+                                            <p class="font-bold capitalize">{key.replace(/_/g, ' ')}:</p>
+                                            <p>{value}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </details>
+                        )}
+                    </div>
+                    
+                    {/* El estado actual es pendiente */}
+                    {app.estado === 'pendiente' && (
+                        <div class="mt-6 flex justify-end gap-2">
+                            <button data-id={app.id} data-estado="aceptada" class="btn-accion bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-full transition duration-300 transform hover:scale-105 hover:shadow-lg" title="Aceptar">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <button data-id={app.id} data-estado="denegada" class="btn-accion bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-full transition duration-300 transform hover:scale-105 hover:shadow-lg" title="Denegar">
+                                <i class="fas fa-xmark"></i>
+                            </button>
+                        </div>
+                    )}
+                </div>
+            ))}
+        </div>
+    </main>
+</Layout>
+
+<script>
+    // Función para mostrar una notificación animada
+    function showNotification(message, type) {
+        // Creamos el contenedor de la notificación
+        const notificationContainer = document.createElement('div');
+        notificationContainer.classList.add(
+            'fixed', 'bottom-5', 'left-1/2', '-translate-x-1/2', 'p-4', 'rounded-lg', 
+            'text-white', 'font-semibold', 'shadow-lg', 'z-[1000]', 'max-w-sm', 'w-full',
+            'transition-all', 'duration-300', 'ease-in-out', 'transform', 'translate-y-full'
+        );
+        
+        // Configuramos el color y el icono según el tipo
+        const color = type === 'success' ? 'bg-green-600' : 'bg-red-600';
+        const icon = type === 'success' ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-x-circle"></i>';
+        
+        // Inyectamos el HTML de la notificación
+        notificationContainer.innerHTML = `
+            <div class="flex items-center gap-3 ${color} rounded-lg p-3 w-full">
+                ${icon}
+                <span>${message}</span>
+            </div>
+        `;
+
+        document.body.appendChild(notificationContainer);
+        
+        // Pequeño retraso para que la animación de entrada funcione
+        setTimeout(() => {
+            notificationContainer.style.transform = 'translateX(-50%) translateY(0)';
+        }, 10);
+        
+        // Ocultar y eliminar después de 3 segundos
+        setTimeout(() => {
+            notificationContainer.style.transform = 'translateX(-50%) translateY(100%)';
+            setTimeout(() => {
+                notificationContainer.remove();
+            }, 300); // Esperar a que la transición de salida termine
+        }, 3000);
+    }
+
+    document.querySelectorAll('.btn-accion').forEach(button => {
+        button.addEventListener('click', async (event) => {
+            // Utilizamos event.currentTarget para asegurarnos de que la referencia es siempre el botón
+            const targetButton = event.currentTarget;
+            const id = targetButton.dataset.id;
+            const estado = targetButton.dataset.estado;
+
+            // Deshabilitar temporalmente los botones para evitar múltiples clics
+            document.querySelectorAll('.btn-accion').forEach(btn => btn.disabled = true);
+
+            try {
+                const response = await fetch(`/api/aplicaciones/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ estado })
+                });
+
+                if (response.ok) {
+                    showNotification('Estado actualizado correctamente!', 'success');
+                    window.location.reload();
+                } else {
+                    const error = await response.json();
+                    showNotification(`Error: ${error.error}`, 'error');
+                }
+            } catch (error) {
+                showNotification('Hubo un error al actualizar el estado.', 'error');
+            } finally {
+                // Habilitar los botones nuevamente
+                document.querySelectorAll('.btn-accion').forEach(btn => btn.disabled = false);
+            }
+        });
+    });
+</script>

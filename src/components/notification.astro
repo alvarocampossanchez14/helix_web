@@ -1,0 +1,25 @@
+---
+import { Icon } from 'astro-icon/components';
+
+// Definimos las propiedades que acepta el componente
+export interface Props {
+  message: string;
+  type: 'success' | 'error';
+}
+
+const { message, type } = Astro.props;
+
+// Configuramos el color y el icono según el tipo de mensaje
+const color = type === 'success' ? 'bg-green-600' : 'bg-red-600';
+const icon = type === 'success' ? 'ph:check-circle-bold' : 'ph:x-circle-bold';
+---
+
+<div
+  class=`fixed top-5 right-5 -translate-x-1/2 p-4 rounded-lg text-white font-semibold shadow-lg z-[1000] max-w-sm w-full transition-all duration-300 ease-in-out transform`
+  data-notification-container
+>
+  <div class=`flex items-center gap-3 ${color} rounded-lg p-3 w-full`>
+    <Icon name={icon} class="w-6 h-6" />
+    <span>{message}</span>
+  </div>
+</div>

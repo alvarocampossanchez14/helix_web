@@ -1,0 +1,81 @@
+<section id="faq" class="relative py-24 bg-black bg-opacity-70 text-white overflow-hidden">
+  <div class="absolute inset-0 bg-gradient-to-t from-black via-black/90 to-transparent pointer-events-none"></div>
+
+  <div class="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div class="mb-16 text-center">
+      <h6 class="text-lg text-gray-400 font-medium mb-2">FAQs</h6>
+      <h2 class="text-4xl font-manrope font-bold leading-[3.25rem]">Frequently asked questions</h2>
+    </div>
+
+    <div id="faq-container" class="space-y-6 max-w-4xl mx-auto">
+      <!-- FAQ items se insertan aquí -->
+    </div>
+  </div>
+</section>
+
+<script>
+  const faqData = [
+    {
+      question: '¿Cómo me registro en Helix?',
+      answer: 'Para registrarte, simplemente completa el formulario de inscripción en la sección principal y sigue las instrucciones que te enviaremos por correo.'
+    },
+    {
+      question: '¿Qué requisitos debo cumplir para entrar?',
+      answer: 'Debes tener al menos 18 años y aceptar las normas de la comunidad para garantizar un ambiente sano y respetuoso.'
+    },
+    {
+      question: '¿Puedo jugar desde cualquier plataforma?',
+      answer: 'Actualmente el servidor es compatible con PC, pero estamos trabajando para expandir soporte a otras plataformas.'
+    },
+  ];
+
+  const faqContainer = document.getElementById('faq-container');
+
+  faqData.forEach(item => {
+    const detailsElement = document.createElement('details');
+    detailsElement.className = `
+      group accordion
+      bg-white/10
+      backdrop-blur-md
+      border border-white border-opacity-20
+      rounded-3xl
+      py-6 px-8
+      shadow-lg
+      transition-all duration-300
+      hover:bg-white/20
+      focus-within:ring-2 focus-within:ring-white focus-within:ring-opacity-40
+    `;
+
+    const summaryElement = document.createElement('summary');
+    summaryElement.className = `
+      accordion-toggle
+      flex items-center justify-between
+      cursor-pointer
+      text-white text-lg font-semibold leading-7
+      hover:text-gray-300
+      transition duration-300
+      select-none
+    `;
+
+    const h5Element = document.createElement('h5');
+    h5Element.textContent = item.question;
+
+    const svgIcon = `
+      <svg class="text-gray-400 transition duration-300 group-hover:text-gray-300 group-open:rotate-180" width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M16.5 8.25L12.4142 12.3358C11.7475 13.0025 11.4142 13.3358 11 13.3358C10.5858 13.3358 10.2525 13.0025 9.58579 12.3358L5.5 8.25" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    `;
+
+    summaryElement.appendChild(h5Element);
+    summaryElement.insertAdjacentHTML('beforeend', svgIcon);
+
+    const pElement = document.createElement('p');
+    pElement.className = 'text-gray-300 leading-7 mt-4 max-w-prose';
+    pElement.textContent = item.answer;
+
+    detailsElement.appendChild(summaryElement);
+    detailsElement.appendChild(pElement);
+
+    faqContainer.appendChild(detailsElement);
+  });
+</script>

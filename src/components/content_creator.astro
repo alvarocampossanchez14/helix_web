@@ -1,0 +1,105 @@
+---
+---
+<div class="bg-black/50 text-white min-h-screen p-8 flex flex-col">
+  <div class="max-w-4xl mx-auto text-center mb-16 pt-24">
+    <h1 class="text-4xl font-extrabold mb-4 tracking-tight">Únete a nuestra comunidad de creadores</h1>
+    <p class="text-lg text-gray-400 mb-8 leading-relaxed">
+      Si eres un streamer o creador de contenido y quieres que tus directos se muestren aquí,
+      solicita el rol en nuestro canal de Discord. Con él, serás parte de nuestra comunidad y
+      podremos promocionar tus directos de forma automática.
+    </p>
+    <a
+      href="URL_A_TU_DISCORD"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="inline-block bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-500 focus:outline-none text-white font-semibold py-3 px-8 rounded-lg transition-colors"
+      aria-label="Solicitar acceso en Discord"
+    >
+      Solicitar Acceso en Discord
+    </a>
+  </div>
+
+  <div class="max-w-6xl mx-auto flex-grow">
+    <h2 class="text-3xl font-bold text-center mb-8">Directos activos</h2>
+
+    <div id="streams-container" class="min-h-[200px] flex items-center justify-center">
+      <!-- Spinner simple mientras carga -->
+      <svg class="animate-spin h-10 w-10 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+      </svg>
+      <span class="sr-only">Cargando directos...</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  const streamsContainer = document.getElementById('streams-container');
+
+  const createStreamCard = (stream) => {
+    const a = document.createElement('a');
+    a.href = `https://twitch.tv/${stream.user_login}`;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.className = 'group relative block rounded-lg overflow-hidden shadow-lg transition-transform duration-300 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-indigo-600';
+
+    const img = document.createElement('img');
+    img.src = stream.thumbnail_url.replace('{width}', '640').replace('{height}', '360');
+    img.alt = `Preview de ${stream.user_name}`;
+    img.className = 'w-full h-auto object-cover';
+
+    const overlay = document.createElement('div');
+    overlay.className = 'absolute inset-0 bg-gradient-to-t from-black/80 to-transparent p-4 flex flex-col justify-end';
+
+    const liveBadge = document.createElement('span');
+    liveBadge.textContent = 'En vivo';
+    liveBadge.className = 'absolute top-4 left-4 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full uppercase';
+
+    const title = document.createElement('h3');
+    title.textContent = stream.title;
+    title.className = 'text-xl font-bold mb-1 text-white';
+
+    const userName = document.createElement('p');
+    userName.textContent = stream.user_name;
+    userName.className = 'text-sm text-gray-300';
+
+    overlay.appendChild(liveBadge);
+    overlay.appendChild(title);
+    overlay.appendChild(userName);
+
+    a.appendChild(img);
+    a.appendChild(overlay);
+
+    return a;
+  };
+
+  const fetchStreams = async () => {
+    try {
+      const response = await fetch('/api/twitch');
+      if (!response.ok) throw new Error('Error en la respuesta del servidor');
+
+      const streams = await response.json();
+
+      streamsContainer.innerHTML = '';
+
+      if (streams.length > 0) {
+        const gridDiv = document.createElement('div');
+        gridDiv.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8';
+
+        streams.forEach(stream => {
+          gridDiv.appendChild(createStreamCard(stream));
+        });
+
+        streamsContainer.appendChild(gridDiv);
+      } else {
+        streamsContainer.innerHTML = '<p class="text-center text-gray-400">No hay directos activos en este momento.</p>';
+      }
+    } catch (error) {
+      console.error('Error al obtener los streams:', error);
+      streamsContainer.innerHTML = '<p class="text-center text-red-500">Error al cargar los directos. Inténtalo de nuevo más tarde.</p>';
+    }
+  };
+
+  fetchStreams();
+  setInterval(fetchStreams, 60000);
+</script>
