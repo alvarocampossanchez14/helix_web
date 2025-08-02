@@ -1,8 +1,8 @@
 // astro.config.mjs
 // @ts-check
 import { defineConfig } from 'astro/config';
+import vercel from '@astrojs/vercel/'; // ¡OJO con el /serverless!
 import tailwindcss from '@tailwindcss/vite';
-import vercel from '@astrojs/vercel/serverless';
 import tunnel from 'astro-tunnel';
 
 // https://astro.build/config
@@ -11,6 +11,9 @@ export default defineConfig({
       plugins: [tailwindcss()],
   },
   integrations: [tunnel()],
-  output: 'static',
-  adapter: vercel(),
+  // ⬇️ Este es el cambio clave ⬇️
+  output: 'server',
+  adapter: vercel({
+      webAnalytics: { enabled: true }
+  }),
 });
