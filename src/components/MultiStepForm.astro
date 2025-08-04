@@ -171,6 +171,7 @@ const getFieldType = (name) => {
       }
 
       showNotification('Postulación enviada con éxito. ¡Gracias!', 'success');
+      window.location.href = '/area-personal';
 
     } catch (error) {
       console.error('Error:', error);
