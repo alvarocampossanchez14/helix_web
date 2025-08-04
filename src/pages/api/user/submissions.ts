@@ -13,7 +13,6 @@ export const GET: APIRoute = async ({ request, cookies }) => {
       });
     }
 
-    // Consulta la base de datos para encontrar las aplicaciones enviadas por este usuario.
     const [submissions] = await db.execute(
       'SELECT DISTINCT tipo_formulario FROM aplicaciones WHERE discord_id = ?',
       [userId]

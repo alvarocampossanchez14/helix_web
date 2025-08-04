@@ -24,7 +24,6 @@ if (user) {
       console.log("Estados de los formularios:", allFormStatuses);
     }
 
-    // NUEVO: Obtenemos los formularios ya enviados por el usuario
     const submissionsResponse = await fetch(`${Astro.url.origin}/api/user/submissions`, {
         headers: Astro.request.headers
     });
@@ -38,7 +37,6 @@ if (user) {
   }
 }
 
-// Definimos todos los enlaces posibles y sus nombres de formulario
 const accessLinks = [
   { 
     title: 'POSTULACIÓN STAFF - HELIX STUDIO', 
