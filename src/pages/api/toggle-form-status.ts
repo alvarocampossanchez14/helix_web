@@ -1,6 +1,5 @@
-// src/pages/api/admin/toggle-form-status.ts
 import type { APIRoute } from 'astro';
-import db from '../../db'; // Importa la conexión a la base de datos
+import db from '../../db'; 
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -13,8 +12,6 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    // Usamos INSERT ... ON DUPLICATE KEY UPDATE para asegurarnos de que la entrada exista
-    // Si form_name ya existe, actualiza is_enabled. Si no, inserta una nueva fila.
     await db.execute(
       'INSERT INTO configuracion (form_name, is_enabled) VALUES (?, ?) ON DUPLICATE KEY UPDATE is_enabled = VALUES(is_enabled)',
       [form_name, is_enabled ? 1 : 0]

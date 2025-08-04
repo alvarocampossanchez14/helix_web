@@ -1,4 +1,3 @@
-// src/pages/api/user/submissions.ts
 import type { APIRoute } from 'astro';
 import db from '../../../db';
 import { getUserIdFromSession } from '../../../utils/auth.js';
